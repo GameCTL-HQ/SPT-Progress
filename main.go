@@ -12,6 +12,7 @@
 package main
 
 import (
+	"crypto/subtle"
 	"embed"
 	"encoding/json"
 	"fmt"
@@ -33,6 +34,10 @@ var (
 	profilesDir = envOr("GAMECTL_PROFILES_DIR", "/data/profiles")
 	siteBrand   = envOr("SITE_BRAND", "GameCTL")
 	cacheTTL    = 30 * time.Second
+	// Optional HTTP Basic Auth: set both to require a login on every page
+	// (health probe stays open). Unset = public site.
+	authUser = os.Getenv("BASIC_AUTH_USER")
+	authPass = os.Getenv("BASIC_AUTH_PASS")
 )
 
 func envOr(k, dflt string) string {
@@ -331,9 +336,29 @@ func main() {
 		render(w, "home.html", map[string]any{"Title": "Players", "Rows": loadProfiles()})
 	})
 
+	var handler http.Handler = mux
+	if authUser != "" && authPass != "" {
+		inner := handler
+		handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			if r.URL.Path == "/healthz" {
+				inner.ServeHTTP(w, r)
+				return
+			}
+			u, p, ok := r.BasicAuth()
+			if !ok || subtle.ConstantTimeCompare([]byte(u), []byte(authUser)) != 1 ||
+				subtle.ConstantTimeCompare([]byte(p), []byte(authPass)) != 1 {
+				w.Header().Set("WWW-Authenticate", `Basic realm="`+siteBrand+` SPT Progress"`)
+				http.Error(w, "authentication required", http.StatusUnauthorized)
+				return
+			}
+			inner.ServeHTTP(w, r)
+		})
+		slog.Info("basic auth enabled", "user", authUser)
+	}
+
 	addr := envOr("LISTEN_ADDR", ":8080")
 	slog.Info("spt-progress up", "addr", addr, "profiles", profilesDir, "brand", siteBrand)
-	if err := http.ListenAndServe(addr, mux); err != nil {
+	if err := http.ListenAndServe(addr, handler); err != nil {
 		slog.Error("listen failed", "err", err)
 		os.Exit(1)
 	}
