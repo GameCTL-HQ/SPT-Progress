@@ -1,0 +1,40 @@
+{{template "head" .}}
+{{$p := .P}}
+<div class="flex items-baseline gap-3 mb-6">
+  <h1 class="text-2xl font-bold">{{$p.DisplayName}}</h1>
+  <span class="text-slate-400">{{$p.Side}} · PMC level {{$p.Level}} · Scav level {{$p.ScavLevel}}</span>
+</div>
+<div class="grid md:grid-cols-3 gap-4 mb-6">
+  <div class="card p-5"><div class="text-slate-400 text-xs uppercase mb-1">Roubles</div><div class="text-xl font-bold">₽ {{comma $p.Rub}}</div></div>
+  <div class="card p-5"><div class="text-slate-400 text-xs uppercase mb-1">Dollars</div><div class="text-xl font-bold">$ {{comma $p.Usd}}</div></div>
+  <div class="card p-5"><div class="text-slate-400 text-xs uppercase mb-1">Euros</div><div class="text-xl font-bold">€ {{comma $p.Eur}}</div></div>
+</div>
+<div class="grid md:grid-cols-2 gap-4 mb-6">
+  <div class="card p-5">
+    <h2 class="font-semibold mb-3">Progress</h2>
+    <dl class="text-sm space-y-2">
+      <div class="flex justify-between"><dt class="text-slate-400">Experience</dt><dd>{{comma $p.Experience}}</dd></div>
+      <div class="flex justify-between"><dt class="text-slate-400">Quests completed</dt><dd class="text-emerald-400">{{$p.QuestsDone}}</dd></div>
+      <div class="flex justify-between"><dt class="text-slate-400">Quests in progress</dt><dd>{{$p.QuestsActive}}</dd></div>
+      <div class="flex justify-between"><dt class="text-slate-400">Fence rep</dt><dd>{{printf "%.2f" $p.FenceRep}}</dd></div>
+      {{if $p.Raids}}
+      <div class="flex justify-between"><dt class="text-slate-400">PMC raids</dt><dd>{{$p.Raids}} ({{pct $p.SurvivedRaids $p.Raids}}% survived)</dd></div>
+      <div class="flex justify-between"><dt class="text-slate-400">Kills / deaths</dt><dd>{{$p.Kills}} / {{$p.Deaths}}</dd></div>
+      {{end}}
+      <div class="flex justify-between"><dt class="text-slate-400">Edition</dt><dd>{{$p.Edition}}</dd></div>
+      <div class="flex justify-between"><dt class="text-slate-400">SPT version</dt><dd>{{$p.SptVersion}}</dd></div>
+      <div class="flex justify-between"><dt class="text-slate-400">Last saved</dt><dd>{{since $p.UpdatedAt}}</dd></div>
+    </dl>
+  </div>
+  <div class="card p-5">
+    <h2 class="font-semibold mb-3">Top skills</h2>
+    {{if $p.TopSkills}}
+    <ul class="text-sm space-y-2">
+      {{range $p.TopSkills}}
+      <li class="flex justify-between"><span class="text-slate-400">{{.Name}}</span><span>lvl {{.Level}}</span></li>
+      {{end}}
+    </ul>
+    {{else}}<div class="text-slate-500 text-sm">No skill progress yet.</div>{{end}}
+  </div>
+</div>
+{{template "footer" .}}

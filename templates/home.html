@@ -1,0 +1,37 @@
+{{template "head" .}}
+<h1 class="text-2xl font-bold mb-6">Players</h1>
+{{if not .Rows}}
+  <div class="card p-8 text-center text-slate-400">No profiles found yet — create an account in the SPT launcher and it shows up here.</div>
+{{else}}
+<div class="card overflow-x-auto">
+<table class="w-full text-sm">
+  <thead class="text-left text-slate-400 border-b border-slate-800">
+    <tr>
+      <th class="px-4 py-3">Player</th><th class="px-4 py-3">Side</th>
+      <th class="px-4 py-3 text-right">Level</th><th class="px-4 py-3 text-right">XP</th>
+      <th class="px-4 py-3 text-right">₽ Roubles</th><th class="px-4 py-3 text-right">$ Dollars</th><th class="px-4 py-3 text-right">€ Euros</th>
+      <th class="px-4 py-3 text-right">Quests ✓</th><th class="px-4 py-3 text-right">Active</th>
+      <th class="px-4 py-3 text-right">Updated</th>
+    </tr>
+  </thead>
+  <tbody>
+  {{range .Rows}}
+    <tr class="border-b border-slate-800/40 hover:bg-slate-800/30 transition">
+      <td class="px-4 py-3"><a class="text-amber-400 hover:text-amber-300 font-semibold" href="/player/{{.Id}}">{{.DisplayName}}</a>
+        {{if and .Username (ne .Username .Nickname)}}<span class="text-slate-500 text-xs ml-1">({{.Username}})</span>{{end}}</td>
+      <td class="px-4 py-3">{{.Side}}</td>
+      <td class="px-4 py-3 text-right font-semibold">{{.Level}}</td>
+      <td class="px-4 py-3 text-right text-slate-400">{{comma .Experience}}</td>
+      <td class="px-4 py-3 text-right">{{comma .Rub}}</td>
+      <td class="px-4 py-3 text-right">{{comma .Usd}}</td>
+      <td class="px-4 py-3 text-right">{{comma .Eur}}</td>
+      <td class="px-4 py-3 text-right text-emerald-400">{{.QuestsDone}}</td>
+      <td class="px-4 py-3 text-right text-slate-400">{{.QuestsActive}}</td>
+      <td class="px-4 py-3 text-right text-slate-500">{{since .UpdatedAt}}</td>
+    </tr>
+  {{end}}
+  </tbody>
+</table>
+</div>
+{{end}}
+{{template "footer" .}}

@@ -1,0 +1,45 @@
+# spt-progress — read-only progress site for the SPT (fika) server.
+# Mounts the server's profiles dir from the same NFS volume, read-only.
+# ClusterIP only; expose externally via ProxyCTL.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: spt-progress
+  namespace: gamectl
+  labels: { app: spt-progress, app.kubernetes.io/part-of: games, app.kubernetes.io/managed-by: gamectl }
+spec:
+  replicas: 1
+  selector: { matchLabels: { app: spt-progress } }
+  template:
+    metadata:
+      labels: { app: spt-progress, app.kubernetes.io/part-of: games, app.kubernetes.io/managed-by: gamectl }
+    spec:
+      containers:
+        - name: spt-progress
+          image: ghcr.io/gamectl-hq/spt-progress:latest
+          imagePullPolicy: Always
+          env:
+            - { name: GAMECTL_PROFILES_DIR, value: /data/profiles }
+            - { name: SITE_BRAND, value: "GrimmLabs" }
+          ports: [{ name: http, containerPort: 8080 }]
+          livenessProbe: { httpGet: { path: /healthz, port: http }, periodSeconds: 20 }
+          readinessProbe: { httpGet: { path: /healthz, port: http }, periodSeconds: 5 }
+          resources:
+            requests: { cpu: 25m, memory: 32Mi }
+            limits: { memory: 256Mi }
+          volumeMounts:
+            - { name: profiles, mountPath: /data/profiles, readOnly: true }
+      volumes:
+        - name: profiles
+          nfs: { server: 192.168.1.100, path: /mnt/1tbssdfast/GameCTL/fika/SPT/user/profiles, readOnly: true }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: spt-progress
+  namespace: gamectl
+  labels: { app: spt-progress }
+spec:
+  type: ClusterIP
+  selector: { app: spt-progress }
+  ports: [{ name: http, port: 80, targetPort: http }]
